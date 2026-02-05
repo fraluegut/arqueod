@@ -854,20 +854,7 @@
         ]);
 
         let nextBtnRef = null;
-        const minChars = 20;
-        const canNextNow = () => (state.harassmentKinds.size>0 && state.harassmentNarrative.trim().length>=minChars);
-
-        const updateCharHint = (count) => {
-          const hintEl = document.getElementById('harassmentCharHint');
-          if (!hintEl) return;
-          const needed = Math.max(0, minChars - count);
-          if (count > 0 && count < minChars) {
-            hintEl.textContent = `✍️ Escribe al menos ${needed} caracteres más (mínimo ${minChars})`;
-            hintEl.style.display = 'block';
-          } else {
-            hintEl.style.display = 'none';
-          }
-        };
+        const canNextNow = () => (state.harassmentKinds.size>0);
 
         const narrative = el("textarea",{
           value: state.harassmentNarrative,
@@ -875,15 +862,8 @@
           oninput:(e)=>{
             state.harassmentNarrative = e.target.value;
             if (nextBtnRef) nextBtnRef.disabled = !canNextNow();
-            updateCharHint(e.target.value.trim().length);
           }
         });
-
-        const charsCount = state.harassmentNarrative.trim().length;
-        const charsNeeded = Math.max(0, minChars - charsCount);
-        const charHint = el("div", { id:"harassmentCharHint", style:"margin-top:6px;color:var(--muted);font-size:.88rem;" + (charsCount === 0 || charsCount >= minChars ? "display:none;" : "") }, [
-            `✍️ Escribe al menos ${charsNeeded} caracteres más (mínimo ${minChars})`
-          ]);
 
         return card({
           kicker:"Bloque específico",
@@ -898,9 +878,8 @@
             opt("reprisals","Represalias","Amenazas, vetos…"),
             opt("other","Otro",""),
             el("label",{class:"h"},["Describe lo ocurrido (detalle)"]),
-            narrative,
-            charHint
-          ].filter(Boolean),
+            narrative
+          ],
           nav: navButtons({
             canNext: canNextNow(),
             onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
@@ -916,20 +895,7 @@
         ]);
 
         let nextBtnRef = null;
-        const minChars = 20;
-        const canNextNow = () => (!!state.heritageType && state.heritageRisk.size>0 && state.heritageNarrative.trim().length>=minChars);
-
-        const updateCharHint = (count) => {
-          const hintEl = document.getElementById('heritageCharHint');
-          if (!hintEl) return;
-          const needed = Math.max(0, minChars - count);
-          if (count > 0 && count < minChars) {
-            hintEl.textContent = `✍️ Escribe al menos ${needed} caracteres más (mínimo ${minChars})`;
-            hintEl.style.display = 'block';
-          } else {
-            hintEl.style.display = 'none';
-          }
-        };
+        const canNextNow = () => (!!state.heritageType && state.heritageRisk.size>0);
 
         const narrative = el("textarea",{
           value: state.heritageNarrative,
@@ -937,15 +903,8 @@
           oninput:(e)=>{
             state.heritageNarrative = e.target.value;
             if (nextBtnRef) nextBtnRef.disabled = !canNextNow();
-            updateCharHint(e.target.value.trim().length);
           }
         });
-
-        const charsCount = state.heritageNarrative.trim().length;
-        const charsNeeded = Math.max(0, minChars - charsCount);
-        const charHint = el("div", { id:"heritageCharHint", style:"margin-top:6px;color:var(--muted);font-size:.88rem;" + (charsCount === 0 || charsCount >= minChars ? "display:none;" : "") }, [
-            `✍️ Escribe al menos ${charsNeeded} caracteres más (mínimo ${minChars})`
-          ]);
 
         return card({
           kicker:"Bloque específico",
@@ -974,9 +933,8 @@
             opt("malas_practicas","Malas prácticas técnicas","Intervenciones inadecuadas…"),
             opt("otro","Otro",""),
             el("label",{class:"h"},["Describe la situación (detalle)"]),
-            narrative,
-            charHint
-          ].filter(Boolean),
+            narrative
+          ],
           nav: navButtons({
             canNext: canNextNow(),
             onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
