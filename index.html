@@ -491,27 +491,27 @@
     // ========== Código del formulario ==========
     
     // ========== Estado ==========
-    const state = {
-      anon: "yes",
-      followup: "no",
-      contact: "",
-      role: "",
-      categories: new Set(),
-      whereType: "",
-      whereRef: "",
-      whenType: "",
-      whenRef: "",
-      summary: "",
-      sourcesText: "",
-      hasEvidence: new Set(),
-      uploadedFiles: [],
-      harassmentKinds: new Set(),
-      harassmentNarrative: "",
-      heritageType: "",
-      heritageRisk: new Set(),
-      heritageNarrative: "",
-      consent1:false, consent2:false, consent3:false,
-      submitStatus: ""
+    const estado = {
+      anonimo: "si",
+      seguimiento: "no",
+      contacto: "",
+      relacion: "",
+      categorias: new Set(),
+      tipoDonde: "",
+      refDonde: "",
+      tipoCuando: "",
+      refCuando: "",
+      resumen: "",
+      textoFuentes: "",
+      tieneEvidencia: new Set(),
+      archivosSubidos: [],
+      tiposAcoso: new Set(),
+      narrativaAcoso: "",
+      tipoPatrimonio: "",
+      riesgoPatrimonio: new Set(),
+      narrativaPatrimonio: "",
+      consentimiento1:false, consentimiento2:false, consentimiento3:false,
+      estadoEnvio: ""
     };
 
     // ========== Helpers ==========
@@ -539,139 +539,139 @@
     const pText = document.getElementById("pText");
     const pBar  = document.getElementById("pBar");
 
-    function buildFlow() {
-      const base = ["intro","reporter","categories","common_context","common_summary"];
+    function construirFlujo() {
+      const base = ["inicio","informante","categorias","contexto_comun","resumen_comun"];
       const extra = [];
-      if (state.categories.has("harassment")) extra.push("harassment_block");
-      if (state.categories.has("heritage")) extra.push("heritage_block");
-      const tail = ["sources","consent","done"];
-      return [...base, ...extra, ...tail];
+      if (estado.categorias.has("acoso")) extra.push("bloque_acoso");
+      if (estado.categorias.has("patrimonio")) extra.push("bloque_patrimonio");
+      const cola = ["fuentes","consentimiento","finalizado"];
+      return [...base, ...extra, ...cola];
     }
 
-    let flow = buildFlow();
-    let idx = 0;
+    let flujo = construirFlujo();
+    let indice = 0;
 
-    function updateProgress() {
-      flow = buildFlow();
-      if (idx >= flow.length) idx = flow.length - 1;
-      pText.textContent = `Paso ${Math.min(idx+1, flow.length)} de ${flow.length}`;
-      const pct = Math.round(((idx+1) / flow.length) * 100);
+    function actualizarProgreso() {
+      flujo = construirFlujo();
+      if (indice >= flujo.length) indice = flujo.length - 1;
+      pText.textContent = `Paso ${Math.min(indice+1, flujo.length)} de ${flujo.length}`;
+      const pct = Math.round(((indice+1) / flujo.length) * 100);
       pBar.style.width = pct + "%";
     }
 
-    function next() {
-      flow = buildFlow();
-      if (idx < flow.length - 1) idx++;
-      render();
+    function siguiente() {
+      flujo = construirFlujo();
+      if (indice < flujo.length - 1) indice++;
+      renderizar();
       window.scrollTo({top:0, behavior:"smooth"});
     }
-    function back() {
-      if (idx > 0) idx--;
-      render();
+    function atras() {
+      if (indice > 0) indice--;
+      renderizar();
       window.scrollTo({top:0, behavior:"smooth"});
     }
 
-    // ✅ Nav con botón next retornado para habilitar/deshabilitar sin re-render
-    function navButtons({ canNext=true, nextLabel="Siguiente", showBack=true, onMount=null } = {}) {
-      const backBtn = el("button", { class:"btn", type:"button", onclick: back }, ["Atrás"]);
-      const nextBtn = el("button", { class:"btn primary", type:"button", onclick: next }, [nextLabel]);
+    // ✅ Nav con botón siguiente retornado para habilitar/deshabilitar sin re-render
+    function botonesNav({ puedeAvanzar=true, etiquetaSiguiente="Siguiente", mostrarAtras=true, alMontar=null } = {}) {
+      const btnAtras = el("button", { class:"btn", type:"button", onclick: atras }, ["Atrás"]);
+      const btnSiguiente = el("button", { class:"btn primary", type:"button", onclick: siguiente }, [etiquetaSiguiente]);
 
-      if (!showBack) backBtn.disabled = true;
-      nextBtn.disabled = !canNext;
+      if (!mostrarAtras) btnAtras.disabled = true;
+      btnSiguiente.disabled = !puedeAvanzar;
 
       const nav = el("div", { class:"nav" }, [
         el("div", { class:"mini" }, ["Usa Siguiente para avanzar."]),
         el("div", { class:"right" }, [
-          showBack ? backBtn : el("span"),
-          nextBtn
+          mostrarAtras ? btnAtras : el("span"),
+          btnSiguiente
         ])
       ]);
 
-      // hook para activar/desactivar sin render
-      if (typeof onMount === "function") onMount({ nextBtn, backBtn });
+      // hook para activar/desactivar sin renderizar
+      if (typeof alMontar === "function") alMontar({ btnSiguiente, btnAtras });
 
       return nav;
     }
 
-    function card({ kicker, q, hint, body, nav }) {
+    function tarjeta({ encabezado, pregunta, pista, cuerpo, nav }) {
       return el("div", { class:"card" }, [
-        el("p", { class:"kicker" }, [kicker]),
-        el("h2", { class:"q" }, [q]),
-        hint ? el("p", { class:"hint" }, [hint]) : el("span"),
-        ...body,
+        el("p", { class:"kicker" }, [encabezado]),
+        el("h2", { class:"q" }, [pregunta]),
+        pista ? el("p", { class:"hint" }, [pista]) : el("span"),
+        ...cuerpo,
         nav
       ]);
     }
 
-    function render() {
-      flow = buildFlow();
-      updateProgress();
+    function renderizar() {
+      flujo = construirFlujo();
+      actualizarProgreso();
       stage.innerHTML = "";
 
-      const currentKey = flow[idx];
-      const screen = el("div", { class:"screen active" }, [ screenFor(currentKey) ]);
-      stage.appendChild(screen);
+      const claveActual = flujo[indice];
+      const pantalla = el("div", { class:"screen active" }, [ pantallaPara(claveActual) ]);
+      stage.appendChild(pantalla);
     }
 
     // ========== Envío ==========
-    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzI2nt5TJhX3QLV8xEE8WjmatYh9YNM4XKynpQSfc_NHhSlS4m33OAw4zdB-SGxL_g/exec"; // URL Google Apps Script
+    const URL_ENVIO = "https://script.google.com/macros/s/AKfycbzI2nt5TJhX3QLV8xEE8WjmatYh9YNM4XKynpQSfc_NHhSlS4m33OAw4zdB-SGxL_g/exec"; // URL Google Apps Script
 
-    const buildPayload = () => ({
-      anon: state.anon,
-      followup: state.followup,
-      contact: state.contact,
-      role: state.role,
-      categories: [...state.categories],
-      whereType: state.whereType,
-      whereRef: state.whereRef,
-      whenType: state.whenType,
-      whenRef: state.whenRef,
-      summary: state.summary,
-      sourcesText: state.sourcesText,
-      hasEvidence: [...state.hasEvidence],
-      harassmentKinds: [...state.harassmentKinds],
-      harassmentNarrative: state.harassmentNarrative,
-      heritageType: state.heritageType,
-      heritageRisk: [...state.heritageRisk],
-      heritageNarrative: state.heritageNarrative,
-      consent: {
-        consent1: state.consent1,
-        consent2: state.consent2,
-        consent3: state.consent3
+    const construirDatos = () => ({
+      anonimo: estado.anonimo,
+      seguimiento: estado.seguimiento,
+      contacto: estado.contacto,
+      relacion: estado.relacion,
+      categorias: [...estado.categorias],
+      tipoDonde: estado.tipoDonde,
+      refDonde: estado.refDonde,
+      tipoCuando: estado.tipoCuando,
+      refCuando: estado.refCuando,
+      resumen: estado.resumen,
+      textoFuentes: estado.textoFuentes,
+      tieneEvidencia: [...estado.tieneEvidencia],
+      tiposAcoso: [...estado.tiposAcoso],
+      narrativaAcoso: estado.narrativaAcoso,
+      tipoPatrimonio: estado.tipoPatrimonio,
+      riesgoPatrimonio: [...estado.riesgoPatrimonio],
+      narrativaPatrimonio: estado.narrativaPatrimonio,
+      consentimiento: {
+        consentimiento1: estado.consentimiento1,
+        consentimiento2: estado.consentimiento2,
+        consentimiento3: estado.consentimiento3
       },
-      sendUserEmail: !!state.contact.trim(),
-      sendAdminEmail: true,
-      submittedAt: new Date().toISOString()
+      enviarEmailUsuario: !!estado.contacto.trim(),
+      enviarEmailAdmin: true,
+      enviadoEn: new Date().toISOString()
     });
 
-    function getCaptchaToken() {
+    function obtenerTokenCaptcha() {
       // Devuelve aquí el token real de reCAPTCHA/Turnstile cuando lo integres.
       return "";
     }
 
-    async function submitReport() {
-      if (!SUBMIT_ENDPOINT) {
-        state.submitStatus = "Falta configurar la URL de envío.";
-        render();
+    async function enviarInforme() {
+      if (!URL_ENVIO) {
+        estado.estadoEnvio = "Falta configurar la URL de envío.";
+        renderizar();
         return;
       }
 
-      const submitBtn = document.getElementById("submitBtn");
-      if (submitBtn) submitBtn.disabled = true;
-      state.submitStatus = "Enviando…";
-      render();
+      const btnEnviar = document.getElementById("btnEnviar");
+      if (btnEnviar) btnEnviar.disabled = true;
+      estado.estadoEnvio = "Enviando…";
+      renderizar();
 
       try {
-        const payload = buildPayload();
+        const datos = construirDatos();
         const formData = new FormData();
-        formData.append("payload", JSON.stringify(payload));
-        formData.append("captchaToken", getCaptchaToken());
+        formData.append("payload", JSON.stringify(datos));
+        formData.append("captchaToken", obtenerTokenCaptcha());
 
-        state.uploadedFiles.forEach((f, i) => {
-          if (f.file) formData.append(`file_${i}`, f.file, f.name);
+        estado.archivosSubidos.forEach((f, i) => {
+          if (f.file) formData.append(`archivo_${i}`, f.file, f.name);
         });
 
-        const resp = await fetch(SUBMIT_ENDPOINT, {
+        const resp = await fetch(URL_ENVIO, {
           method: "POST",
           body: formData
         });
@@ -680,136 +680,136 @@
           throw new Error("No se pudo enviar el formulario.");
         }
 
-        state.submitStatus = "Enviado correctamente. Gracias por comunicarlo.";
+        estado.estadoEnvio = "Enviado correctamente. Gracias por comunicarlo.";
       } catch (err) {
-        state.submitStatus = "Hubo un problema al enviar. Inténtalo más tarde.";
+        estado.estadoEnvio = "Hubo un problema al enviar. Inténtalo más tarde.";
       } finally {
-        if (submitBtn) submitBtn.disabled = false;
-        render();
+        if (btnEnviar) btnEnviar.disabled = false;
+        renderizar();
       }
     }
 
-    // ========== Screens ==========
-    function screenFor(key) {
-      if (key === "intro") {
-        return card({
-          kicker:"Inicio",
-          q:"Antes de empezar",
-          hint:"Puedes mantener el anonimato. Este canal no sustituye una denuncia judicial o administrativa.",
-          body:[],
-          nav: navButtons({ showBack:false })
+    // ========== Pantallas ==========
+    function pantallaPara(clave) {
+      if (clave === "inicio") {
+        return tarjeta({
+          encabezado:"Inicio",
+          pregunta:"Antes de empezar",
+          pista:"Puedes mantener el anonimato. Este canal no sustituye una denuncia judicial o administrativa.",
+          cuerpo:[],
+          nav: botonesNav({ mostrarAtras:false })
         });
       }
 
-      if (key === "reporter") {
-        const isValidEmail = (email) => {
+      if (clave === "informante") {
+        const esEmailValido = (email) => {
           if (!email.trim()) return false;
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emailRegex.test(email);
+          const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return regexEmail.test(email);
         };
 
         // Mostrar campo de email solo si NO es anónimo O si quiere recibir orientación
-        const showContactField = state.anon === "no" || state.followup === "yes";
+        const mostrarCampoContacto = estado.anonimo === "no" || estado.seguimiento === "si";
 
-        const canNext = () => {
+        const puedeAvanzar = () => {
           // Primero: debe seleccionar su relación con el caso (obligatorio)
-          if (!state.role) return false;
+          if (!estado.relacion) return false;
           
           // Si quiere seguimiento, debe proporcionar un email válido
-          if (state.followup === "yes") {
-            return isValidEmail(state.contact);
+          if (estado.seguimiento === "si") {
+            return esEmailValido(estado.contacto);
           }
           // Si no quiere seguimiento pero escribió algo, debe ser email válido
-          if (state.contact.trim()) {
-            return isValidEmail(state.contact);
+          if (estado.contacto.trim()) {
+            return esEmailValido(estado.contacto);
           }
           // Si no quiere seguimiento y no escribió nada, ok
           return true;
         };
 
-        let nextBtnRef = null;
+        let refBtnSiguiente = null;
 
-        const anonOpt = (val, title, desc) => el("label", { class:"opt" }, [
-          el("input", { type:"radio", name:"anon", value:val, ...(state.anon===val?{checked:""}:{}),
+        const opcionAnonimo = (val, titulo, desc) => el("label", { class:"opt" }, [
+          el("input", { type:"radio", name:"anonimo", value:val, ...(estado.anonimo===val?{checked:""}:{}),
             onchange: (e)=>{ 
-              state.anon = e.target.value; 
+              estado.anonimo = e.target.value; 
               // Si marca anónimo y tenía email, limpiar
-              if (e.target.value === "yes" && state.followup === "no") {
-                state.contact = "";
+              if (e.target.value === "si" && estado.seguimiento === "no") {
+                estado.contacto = "";
               }
-              render(); 
+              renderizar(); 
             }
           }),
-          el("span", {}, [ el("span", { class:"t" }, [title]), el("span", { class:"d" }, [desc]) ])
+          el("span", {}, [ el("span", { class:"t" }, [titulo]), el("span", { class:"d" }, [desc]) ])
         ]);
 
-        const followOpt = (val, title, desc) => el("label", { class:"opt" }, [
-          el("input", { type:"radio", name:"follow", value:val, ...(state.followup===val?{checked:""}:{}),
+        const opcionSeguimiento = (val, titulo, desc) => el("label", { class:"opt" }, [
+          el("input", { type:"radio", name:"seguimiento", value:val, ...(estado.seguimiento===val?{checked:""}:{}),
             onchange: (e)=>{ 
-              state.followup = e.target.value;
+              estado.seguimiento = e.target.value;
               // Si marca "no necesito respuesta" y es anónimo, limpiar email
-              if (e.target.value === "no" && state.anon === "yes") {
-                state.contact = "";
+              if (e.target.value === "no" && estado.anonimo === "si") {
+                estado.contacto = "";
               }
-              if (nextBtnRef) nextBtnRef.disabled = !canNext();
-              render(); 
+              if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzar();
+              renderizar(); 
             }
           }),
-          el("span", {}, [ el("span", { class:"t" }, [title]), el("span", { class:"d" }, [desc]) ])
+          el("span", {}, [ el("span", { class:"t" }, [titulo]), el("span", { class:"d" }, [desc]) ])
         ]);
 
-        const bodyElements = [
+        const elementosCuerpo = [
           el("div", { class:"row" }, [
             el("div", {}, [
               el("label", { class:"h" }, ["Anonimato"]),
-              anonOpt("yes","Sí, anónima","No aporto datos personales."),
-              anonOpt("no","No, puedo dejar contacto (opcional)","Solo se usaría si fuese necesario.")
+              opcionAnonimo("si","Sí, anónima","No aporto datos personales."),
+              opcionAnonimo("no","No, puedo dejar contacto (opcional)","Solo se usaría si fuese necesario.")
             ]),
             el("div", {}, [
               el("label", { class:"h" }, ["Seguimiento"]),
-              followOpt("no","No necesito respuesta","Quiero comunicarlo y ya."),
-              followOpt("yes","Sí, quiero recibir orientación","Puedo dejar un correo (opcional).")
+              opcionSeguimiento("no","No necesito respuesta","Quiero comunicarlo y ya."),
+              opcionSeguimiento("si","Sí, quiero recibir orientación","Puedo dejar un correo (opcional).")
             ])
           ]),
 
           el("label", { class:"h" }, ["¿Qué relación tienes con el caso?"]),
           el("div", { class:"selectCardGroup" }, [
-            ...[{v:"afectado", l:"Afectado/a directo/a"}, {v:"testigo", l:"Testigo"}, {v:"tercero", l:"Me llegó por terceros / documentación"}, {v:"no_decir", l:"Prefiero no decirlo"}].map(opt => 
-              el("label", { class: "selectCard" + (state.role === opt.v ? " selected" : "") }, [
-                el("input", { type:"radio", name:"role", value:opt.v, ...(state.role===opt.v?{checked:""}:{}),
+            ...[{v:"afectado", l:"Afectado/a directo/a"}, {v:"testigo", l:"Testigo"}, {v:"tercero", l:"Me llegó por terceros / documentación"}, {v:"no_decir", l:"Prefiero no decirlo"}].map(opcion => 
+              el("label", { class: "selectCard" + (estado.relacion === opcion.v ? " selected" : "") }, [
+                el("input", { type:"radio", name:"relacion", value:opcion.v, ...(estado.relacion===opcion.v?{checked:""}:{}),
                   onchange:(e)=>{ 
-                    state.role = e.target.value; 
-                    if (nextBtnRef) nextBtnRef.disabled = !canNext();
-                    render(); 
+                    estado.relacion = e.target.value; 
+                    if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzar();
+                    renderizar(); 
                   }
                 }),
-                el("span", { class:"cardLabel" }, [opt.l])
+                el("span", { class:"cardLabel" }, [opcion.l])
               ])
             )
           ])
         ];
 
         // Solo agregar campo de contacto si corresponde
-        if (showContactField) {
-          bodyElements.push(
+        if (mostrarCampoContacto) {
+          elementosCuerpo.push(
             el("label", { class:"h" }, [
               "Contacto ",
-              state.followup === "yes" ? el("span", { style:"color:var(--accent);font-weight:900;" }, ["(requerido para orientación)"]) : "(opcional)"
+              estado.seguimiento === "si" ? el("span", { style:"color:var(--accent);font-weight:900;" }, ["(requerido para orientación)"]) : "(opcional)"
             ]),
             el("input", {
               type:"text",
-              placeholder: state.followup === "yes" ? "correo@dominio.com (requerido)" : "correo@dominio.com",
-              value: state.contact,
+              placeholder: estado.seguimiento === "si" ? "correo@dominio.com (requerido)" : "correo@dominio.com",
+              value: estado.contacto,
               oninput:(e)=>{ 
-                state.contact = e.target.value;
-                if (nextBtnRef) nextBtnRef.disabled = !canNext();
+                estado.contacto = e.target.value;
+                if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzar();
               }
             })
           );
 
           // Mensaje de error
-          if (state.contact.trim() && !isValidEmail(state.contact)) {
-            bodyElements.push(
+          if (estado.contacto.trim() && !esEmailValido(estado.contacto)) {
+            elementosCuerpo.push(
               el("div", { class:"errorMsg" }, [
                 "⚠️",
                 "El email no tiene un formato válido (debe ser: usuario@dominio.com)"
@@ -818,354 +818,354 @@
           }
         }
 
-        return card({
-          kicker:"Tu configuración",
-          q:"¿Cómo quieres comunicarlo?",
-          hint:"Definimos anonimato, si deseas seguimiento, y tu relación con el caso.",
-          body: bodyElements,
-          nav: navButtons({ 
-            canNext: canNext(),
-            onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
+        return tarjeta({
+          encabezado:"Tu configuración",
+          pregunta:"¿Cómo quieres comunicarlo?",
+          pista:"Definimos anonimato, si deseas seguimiento, y tu relación con el caso.",
+          cuerpo: elementosCuerpo,
+          nav: botonesNav({ 
+            puedeAvanzar: puedeAvanzar(),
+            alMontar: ({ btnSiguiente }) => { refBtnSiguiente = btnSiguiente; }
           })
         });
       }
 
-      if (key === "categories") {
-        const toggle = (k)=> { state.categories.has(k) ? state.categories.delete(k) : state.categories.add(k); render(); };
-        const opt = (k, title, desc) => el("label",{class:"opt"},[
-          el("input",{type:"checkbox", ...(state.categories.has(k)?{checked:""}:{}), onchange:()=>toggle(k)}),
-          el("span",{},[ el("span",{class:"t"},[title]), el("span",{class:"d"},[desc]) ])
+      if (clave === "categorias") {
+        const alternar = (k)=> { estado.categorias.has(k) ? estado.categorias.delete(k) : estado.categorias.add(k); renderizar(); };
+        const opcion = (k, titulo, desc) => el("label",{class:"opt"},[
+          el("input",{type:"checkbox", ...(estado.categorias.has(k)?{checked:""}:{}), onchange:()=>alternar(k)}),
+          el("span",{},[ el("span",{class:"t"},[titulo]), el("span",{class:"d"},[desc]) ])
         ]);
-        const canNext = state.categories.size > 0;
+        const puedeAvanzar = estado.categorias.size > 0;
 
-        return card({
-          kicker:"Clasificación",
-          q:"¿Qué tipo de caso es?",
-          hint:"Esto activará preguntas específicas más adelante.",
-          body:[
-            opt("heritage","Patrimonio / yacimiento en riesgo","Daños, abandono, expolio, obras…"),
-            opt("docs","Documentación / archivos","Pérdida, ocultación, accesos…"),
-            opt("precarity","Precariedad / irregularidades","Condiciones, presiones, contratos…"),
-            opt("harassment","Acoso / discriminación","Laboral, académico, sexual, represalias…"),
-            opt("other","Otro","No encaja en lo anterior.")
+        return tarjeta({
+          encabezado:"Clasificación",
+          pregunta:"¿Qué tipo de caso es?",
+          pista:"Esto activará preguntas específicas más adelante.",
+          cuerpo:[
+            opcion("patrimonio","Patrimonio / yacimiento en riesgo","Daños, abandono, expolio, obras…"),
+            opcion("documentacion","Documentación / archivos","Pérdida, ocultación, accesos…"),
+            opcion("precariedad","Precariedad / irregularidades","Condiciones, presiones, contratos…"),
+            opcion("acoso","Acoso / discriminación","Laboral, académico, sexual, represalias…"),
+            opcion("otro","Otro","No encaja en lo anterior.")
           ],
-          nav: navButtons({ canNext })
+          nav: botonesNav({ puedeAvanzar })
         });
       }
 
-      if (key === "common_context") {
-        return card({
-          kicker:"Contexto común",
-          q:"Ubica el caso (dónde y cuándo)",
-          hint:"Útil para cualquier tipo de incidencia.",
-          body:[
+      if (clave === "contexto_comun") {
+        return tarjeta({
+          encabezado:"Contexto común",
+          pregunta:"Ubica el caso (dónde y cuándo)",
+          pista:"Útil para cualquier tipo de incidencia.",
+          cuerpo:[
             el("label",{class:"h"},["¿Dónde ocurre o ha ocurrido?"]),
             el("div", { class:"selectCardGroup cols2" }, [
-              ...[{v:"yacimiento", l:"Yacimiento arqueológico"}, {v:"edificio", l:"Edificio histórico"}, {v:"museo", l:"Museo"}, {v:"archivo", l:"Archivo o biblioteca"}, {v:"universidad", l:"Universidad / centro"}, {v:"laboral", l:"Entorno laboral"}, {v:"otro", l:"Otro"}].map(opt => 
-                el("label", { class: "selectCard" + (state.whereType === opt.v ? " selected" : "") }, [
-                  el("input", { type:"radio", name:"whereType", value:opt.v, ...(state.whereType===opt.v?{checked:""}:{}),
-                    onchange:(e)=>{ state.whereType = e.target.value; render(); }
+              ...[{v:"yacimiento", l:"Yacimiento arqueológico"}, {v:"edificio", l:"Edificio histórico"}, {v:"museo", l:"Museo"}, {v:"archivo", l:"Archivo o biblioteca"}, {v:"universidad", l:"Universidad / centro"}, {v:"laboral", l:"Entorno laboral"}, {v:"otro", l:"Otro"}].map(opcion => 
+                el("label", { class: "selectCard" + (estado.tipoDonde === opcion.v ? " selected" : "") }, [
+                  el("input", { type:"radio", name:"tipoDonde", value:opcion.v, ...(estado.tipoDonde===opcion.v?{checked:""}:{}),
+                    onchange:(e)=>{ estado.tipoDonde = e.target.value; renderizar(); }
                   }),
-                  el("span", { class:"cardLabel" }, [opt.l])
+                  el("span", { class:"cardLabel" }, [opcion.l])
                 ])
               )
             ]),
             el("label",{class:"h"},["Lugar / referencia (opcional)"]),
-            el("input",{type:"text", value:state.whereRef, placeholder:"Municipio, nombre del sitio o referencia aproximada…",
-              oninput:(e)=>{ state.whereRef = e.target.value; }
+            el("input",{type:"text", value:estado.refDonde, placeholder:"Municipio, nombre del sitio o referencia aproximada…",
+              oninput:(e)=>{ estado.refDonde = e.target.value; }
             }),
             el("label",{class:"h"},["¿Cuándo ocurre o ocurrió?"]),
             el("div", { class:"selectCardGroup cols2" }, [
-              ...[{v:"now", l:"Está ocurriendo ahora"}, {v:"recent", l:"Ocurrió recientemente"}, {v:"past", l:"Ocurrió en el pasado"}, {v:"unknown", l:"No lo sé con certeza"}].map(opt => 
-                el("label", { class: "selectCard" + (state.whenType === opt.v ? " selected" : "") }, [
-                  el("input", { type:"radio", name:"whenType", value:opt.v, ...(state.whenType===opt.v?{checked:""}:{}),
-                    onchange:(e)=>{ state.whenType = e.target.value; render(); }
+              ...[{v:"ahora", l:"Está ocurriendo ahora"}, {v:"reciente", l:"Ocurrió recientemente"}, {v:"pasado", l:"Ocurrió en el pasado"}, {v:"desconocido", l:"No lo sé con certeza"}].map(opcion => 
+                el("label", { class: "selectCard" + (estado.tipoCuando === opcion.v ? " selected" : "") }, [
+                  el("input", { type:"radio", name:"tipoCuando", value:opcion.v, ...(estado.tipoCuando===opcion.v?{checked:""}:{}),
+                    onchange:(e)=>{ estado.tipoCuando = e.target.value; renderizar(); }
                   }),
-                  el("span", { class:"cardLabel" }, [opt.l])
+                  el("span", { class:"cardLabel" }, [opcion.l])
                 ])
               )
             ]),
             el("label",{class:"h"},["Fecha o periodo aproximado (opcional)"]),
-            el("input",{type:"text", value:state.whenRef, placeholder:"Enero 2026, verano 2025, hace 2 semanas…",
-              oninput:(e)=>{ state.whenRef = e.target.value; }
+            el("input",{type:"text", value:estado.refCuando, placeholder:"Enero 2026, verano 2025, hace 2 semanas…",
+              oninput:(e)=>{ estado.refCuando = e.target.value; }
             })
           ],
-          nav: navButtons({ canNext:true })
+          nav: botonesNav({ puedeAvanzar:true })
         });
       }
 
-      if (key === "common_summary") {
-        let nextBtnRef = null;
+      if (clave === "resumen_comun") {
+        let refBtnSiguiente = null;
 
-        const txt = el("textarea",{
-          value: state.summary,
+        const areaTexto = el("textarea",{
+          value: estado.resumen,
           placeholder:"Qué, cómo y por qué es relevante…",
           oninput:(e)=>{
-            state.summary = e.target.value;
-            if (nextBtnRef) nextBtnRef.disabled = !state.summary.trim();
+            estado.resumen = e.target.value;
+            if (refBtnSiguiente) refBtnSiguiente.disabled = !estado.resumen.trim();
           }
         });
 
-        return card({
-          kicker:"Resumen",
-          q:"En 3–6 líneas: ¿qué ha pasado?",
-          hint:"Una síntesis clara ayuda muchísimo.",
-          body:[ txt ],
-          nav: navButtons({
-            canNext: !!state.summary.trim(),
-            onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
+        return tarjeta({
+          encabezado:"Resumen",
+          pregunta:"En 3–6 líneas: ¿qué ha pasado?",
+          pista:"Una síntesis clara ayuda muchísimo.",
+          cuerpo:[ areaTexto ],
+          nav: botonesNav({
+            puedeAvanzar: !!estado.resumen.trim(),
+            alMontar: ({ btnSiguiente }) => { refBtnSiguiente = btnSiguiente; }
           })
         });
       }
 
-      if (key === "harassment_block") {
-        const toggle = (k)=> { state.harassmentKinds.has(k) ? state.harassmentKinds.delete(k) : state.harassmentKinds.add(k); render(); };
-        const opt = (k,t,d)=> el("label",{class:"opt"},[
-          el("input",{type:"checkbox", ...(state.harassmentKinds.has(k)?{checked:""}:{}), onchange:()=>toggle(k)}),
+      if (clave === "bloque_acoso") {
+        const alternar = (k)=> { estado.tiposAcoso.has(k) ? estado.tiposAcoso.delete(k) : estado.tiposAcoso.add(k); renderizar(); };
+        const opcion = (k,t,d)=> el("label",{class:"opt"},[
+          el("input",{type:"checkbox", ...(estado.tiposAcoso.has(k)?{checked:""}:{}), onchange:()=>alternar(k)}),
           el("span",{},[ el("span",{class:"t"},[t]), el("span",{class:"d"},[d]) ])
         ]);
 
-        let nextBtnRef = null;
-        const canNextNow = () => (state.harassmentKinds.size>0);
+        let refBtnSiguiente = null;
+        const puedeAvanzarAhora = () => (estado.tiposAcoso.size>0);
 
-        const narrative = el("textarea",{
-          value: state.harassmentNarrative,
+        const narrativa = el("textarea",{
+          value: estado.narrativaAcoso,
           placeholder:"Hechos, patrones, tiempos, consecuencias…",
           oninput:(e)=>{
-            state.harassmentNarrative = e.target.value;
-            if (nextBtnRef) nextBtnRef.disabled = !canNextNow();
+            estado.narrativaAcoso = e.target.value;
+            if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzarAhora();
           }
         });
 
-        return card({
-          kicker:"Bloque específico",
-          q:"Acoso / discriminación",
-          hint:"Si es anónimo, evita nombres y datos identificables.",
-          body:[
+        return tarjeta({
+          encabezado:"Bloque específico",
+          pregunta:"Acoso / discriminación",
+          pista:"Si es anónimo, evita nombres y datos identificables.",
+          cuerpo:[
             el("label",{class:"h"},["¿Qué tipo(s)?"]),
-            opt("mobbing","Acoso laboral (mobbing)","Hostigamiento, presiones…"),
-            opt("academic","Acoso académico","Abuso de jerarquía…"),
-            opt("gender","Acoso sexual / por razón de género","Conductas no deseadas…"),
-            opt("discrimination","Discriminación","Origen, idioma, ideología…"),
-            opt("reprisals","Represalias","Amenazas, vetos…"),
-            opt("other","Otro",""),
+            opcion("mobbing","Acoso laboral (mobbing)","Hostigamiento, presiones…"),
+            opcion("academico","Acoso académico","Abuso de jerarquía…"),
+            opcion("genero","Acoso sexual / por razón de género","Conductas no deseadas…"),
+            opcion("discriminacion","Discriminación","Origen, idioma, ideología…"),
+            opcion("represalias","Represalias","Amenazas, vetos…"),
+            opcion("otro","Otro",""),
             el("label",{class:"h"},["Describe lo ocurrido (detalle)"]),
-            narrative
+            narrativa
           ],
-          nav: navButtons({
-            canNext: canNextNow(),
-            onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
+          nav: botonesNav({
+            puedeAvanzar: puedeAvanzarAhora(),
+            alMontar: ({ btnSiguiente }) => { refBtnSiguiente = btnSiguiente; }
           })
         });
       }
 
-      if (key === "heritage_block") {
-        const toggle = (k)=> { state.heritageRisk.has(k) ? state.heritageRisk.delete(k) : state.heritageRisk.add(k); render(); };
-        const opt = (k,t,d)=> el("label",{class:"opt"},[
-          el("input",{type:"checkbox", ...(state.heritageRisk.has(k)?{checked:""}:{}), onchange:()=>toggle(k)}),
+      if (clave === "bloque_patrimonio") {
+        const alternar = (k)=> { estado.riesgoPatrimonio.has(k) ? estado.riesgoPatrimonio.delete(k) : estado.riesgoPatrimonio.add(k); renderizar(); };
+        const opcion = (k,t,d)=> el("label",{class:"opt"},[
+          el("input",{type:"checkbox", ...(estado.riesgoPatrimonio.has(k)?{checked:""}:{}), onchange:()=>alternar(k)}),
           el("span",{},[ el("span",{class:"t"},[t]), el("span",{class:"d"},[d]) ])
         ]);
 
-        let nextBtnRef = null;
-        const canNextNow = () => (!!state.heritageType && state.heritageRisk.size>0);
+        let refBtnSiguiente = null;
+        const puedeAvanzarAhora = () => (!!estado.tipoPatrimonio && estado.riesgoPatrimonio.size>0);
 
-        const narrative = el("textarea",{
-          value: state.heritageNarrative,
+        const narrativa = el("textarea",{
+          value: estado.narrativaPatrimonio,
           placeholder:"Qué ocurre, desde cuándo, evidencias, urgencia…",
           oninput:(e)=>{
-            state.heritageNarrative = e.target.value;
-            if (nextBtnRef) nextBtnRef.disabled = !canNextNow();
+            estado.narrativaPatrimonio = e.target.value;
+            if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzarAhora();
           }
         });
 
-        return card({
-          kicker:"Bloque específico",
-          q:"Patrimonio / yacimiento en peligro",
-          hint:"Si es sensible, usa referencias aproximadas.",
-          body:[
+        return tarjeta({
+          encabezado:"Bloque específico",
+          pregunta:"Patrimonio / yacimiento en peligro",
+          pista:"Si es sensible, usa referencias aproximadas.",
+          cuerpo:[
             el("label",{class:"h"},["Tipo de lugar afectado"]),
             el("div", { class:"selectCardGroup cols2" }, [
-              ...[{v:"yacimiento", l:"Yacimiento arqueológico"}, {v:"edificio", l:"Edificio histórico"}, {v:"museo", l:"Museo"}, {v:"archivo", l:"Archivo / biblioteca"}, {v:"otro", l:"Otro"}].map(opt => 
-                el("label", { class: "selectCard" + (state.heritageType === opt.v ? " selected" : "") }, [
-                  el("input", { type:"radio", name:"heritageType", value:opt.v, ...(state.heritageType===opt.v?{checked:""}:{}),
+              ...[{v:"yacimiento", l:"Yacimiento arqueológico"}, {v:"edificio", l:"Edificio histórico"}, {v:"museo", l:"Museo"}, {v:"archivo", l:"Archivo / biblioteca"}, {v:"otro", l:"Otro"}].map(opcion => 
+                el("label", { class: "selectCard" + (estado.tipoPatrimonio === opcion.v ? " selected" : "") }, [
+                  el("input", { type:"radio", name:"tipoPatrimonio", value:opcion.v, ...(estado.tipoPatrimonio===opcion.v?{checked:""}:{}),
                     onchange:(e)=>{ 
-                      state.heritageType = e.target.value; 
-                      if (nextBtnRef) nextBtnRef.disabled = !canNextNow();
-                      render(); 
+                      estado.tipoPatrimonio = e.target.value; 
+                      if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzarAhora();
+                      renderizar(); 
                     }
                   }),
-                  el("span", { class:"cardLabel" }, [opt.l])
+                  el("span", { class:"cardLabel" }, [opcion.l])
                 ])
               )
             ]),
             el("label",{class:"h"},["¿Qué riesgo(s) hay?"]),
-            opt("expolio","Expolio / saqueo","Remociones, detectoristas…"),
-            opt("destruccion","Destrucción o alteración","Obras, maquinaria…"),
-            opt("abandono","Abandono / falta de conservación","Degradación, vandalismo…"),
-            opt("malas_practicas","Malas prácticas técnicas","Intervenciones inadecuadas…"),
-            opt("otro","Otro",""),
+            opcion("expolio","Expolio / saqueo","Remociones, detectoristas…"),
+            opcion("destruccion","Destrucción o alteración","Obras, maquinaria…"),
+            opcion("abandono","Abandono / falta de conservación","Degradación, vandalismo…"),
+            opcion("malas_practicas","Malas prácticas técnicas","Intervenciones inadecuadas…"),
+            opcion("otro","Otro",""),
             el("label",{class:"h"},["Describe la situación (detalle)"]),
-            narrative
+            narrativa
           ],
-          nav: navButtons({
-            canNext: canNextNow(),
-            onMount: ({ nextBtn }) => { nextBtnRef = nextBtn; }
+          nav: botonesNav({
+            puedeAvanzar: puedeAvanzarAhora(),
+            alMontar: ({ btnSiguiente }) => { refBtnSiguiente = btnSiguiente; }
           })
         });
       }
 
-      if (key === "sources") {
-        const toggle = (k)=> {
-          if (k==="none") { state.hasEvidence = new Set(["none"]); render(); return; }
-          if (state.hasEvidence.has("none")) state.hasEvidence.delete("none");
-          state.hasEvidence.has(k) ? state.hasEvidence.delete(k) : state.hasEvidence.add(k);
-          render();
+      if (clave === "fuentes") {
+        const alternar = (k)=> {
+          if (k==="ninguna") { estado.tieneEvidencia = new Set(["ninguna"]); renderizar(); return; }
+          if (estado.tieneEvidencia.has("ninguna")) estado.tieneEvidencia.delete("ninguna");
+          estado.tieneEvidencia.has(k) ? estado.tieneEvidencia.delete(k) : estado.tieneEvidencia.add(k);
+          renderizar();
         };
-        const opt = (k,t,d)=> el("label",{class:"opt"},[
-          el("input",{type:"checkbox", ...(state.hasEvidence.has(k)?{checked:""}:{}), onchange:()=>toggle(k)}),
+        const opcion = (k,t,d)=> el("label",{class:"opt"},[
+          el("input",{type:"checkbox", ...(estado.tieneEvidencia.has(k)?{checked:""}:{}), onchange:()=>alternar(k)}),
           el("span",{},[ el("span",{class:"t"},[t]), el("span",{class:"d"},[d]) ])
         ]);
 
-        const handleFileUpload = (e) => {
-          const files = Array.from(e.target.files);
-          const maxSize = 100 * 1024 * 1024; // 100 MB
-          const currentSize = state.uploadedFiles.reduce((sum, f) => sum + f.size, 0);
-          const newSize = files.reduce((sum, f) => sum + f.size, 0);
+        const manejarSubidaArchivos = (e) => {
+          const archivos = Array.from(e.target.files);
+          const tamanoMax = 100 * 1024 * 1024; // 100 MB
+          const tamanoActual = estado.archivosSubidos.reduce((suma, f) => suma + f.size, 0);
+          const tamanoNuevo = archivos.reduce((suma, f) => suma + f.size, 0);
           
-          if (currentSize + newSize > maxSize) {
+          if (tamanoActual + tamanoNuevo > tamanoMax) {
             alert('El tamaño total no puede superar los 100 MB');
             return;
           }
           
-          state.uploadedFiles = [...state.uploadedFiles, ...files.map(f => ({
+          estado.archivosSubidos = [...estado.archivosSubidos, ...archivos.map(f => ({
             name: f.name,
             size: f.size,
             type: f.type,
             file: f
           }))];
-          render();
+          renderizar();
         };
 
-        const removeFile = (index) => {
-          state.uploadedFiles = state.uploadedFiles.filter((_, i) => i !== index);
-          render();
+        const eliminarArchivo = (indice) => {
+          estado.archivosSubidos = estado.archivosSubidos.filter((_, i) => i !== indice);
+          renderizar();
         };
 
-        const formatSize = (bytes) => {
+        const formatearTamano = (bytes) => {
           if (bytes < 1024) return bytes + ' B';
           if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
           return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         };
 
-        const fileInput = el("input", { type: "file", multiple: true, accept: "image/*,video/*,.pdf,.doc,.docx,.txt", onchange: handleFileUpload });
-        const uploadArea = el("div", { class: "uploadArea", onclick: () => fileInput.click() }, [
+        const inputArchivo = el("input", { type: "file", multiple: true, accept: "image/*,video/*,.pdf,.doc,.docx,.txt", onchange: manejarSubidaArchivos });
+        const areaSubida = el("div", { class: "uploadArea", onclick: () => inputArchivo.click() }, [
           el("div", { class: "uploadIcon" }, ["📎"]),
           el("div", { class: "uploadText", style: "font-weight:700;color:var(--accent2);" }, ["Haz clic para adjuntar archivos"]),
           el("div", { class: "uploadText" }, ["Fotos, vídeos, documentos (máx. 100 MB total)"]),
-          fileInput
+          inputArchivo
         ]);
 
-        const fileListItems = state.uploadedFiles.map((file, i) => 
+        const elementosListaArchivos = estado.archivosSubidos.map((archivo, i) => 
           el("div", { class: "fileItem" }, [
             el("div", { class: "fileInfo" }, [
-              el("span", {}, [file.type.startsWith('image/') ? '🖼️' : file.type.startsWith('video/') ? '🎥' : '📄']),
-              el("span", { class: "fileName" }, [file.name]),
-              el("span", { class: "fileSize" }, [formatSize(file.size)])
+              el("span", {}, [archivo.type.startsWith('image/') ? '🖼️' : archivo.type.startsWith('video/') ? '🎥' : '📄']),
+              el("span", { class: "fileName" }, [archivo.name]),
+              el("span", { class: "fileSize" }, [formatearTamano(archivo.size)])
             ]),
-            el("button", { class: "removeFile", type: "button", onclick: () => removeFile(i) }, ["✕"])
+            el("button", { class: "removeFile", type: "button", onclick: () => eliminarArchivo(i) }, ["✕"])
           ])
         );
 
-        const totalSize = state.uploadedFiles.reduce((sum, f) => sum + f.size, 0);
-        const totalSizeEl = state.uploadedFiles.length > 0 ? 
+        const tamanoTotal = estado.archivosSubidos.reduce((suma, f) => suma + f.size, 0);
+        const elTamanoTotal = estado.archivosSubidos.length > 0 ? 
           el("div", { class: "totalSize" }, [
-            `Total: ${formatSize(totalSize)} / 100 MB`
+            `Total: ${formatearTamano(tamanoTotal)} / 100 MB`
           ]) : null;
 
-        const uploadSection = el("div", {}, [
+        const seccionSubida = el("div", {}, [
           el("label", { class: "h" }, ["Adjuntar archivos (opcional)"]),
-          uploadArea,
-          state.uploadedFiles.length > 0 ? el("div", { class: "fileList" }, fileListItems) : null,
-          totalSizeEl
+          areaSubida,
+          estado.archivosSubidos.length > 0 ? el("div", { class: "fileList" }, elementosListaArchivos) : null,
+          elTamanoTotal
         ].filter(Boolean));
 
-        return card({
-          kicker:"Fuentes y evidencias",
-          q:"¿Qué apoyos o fuentes existen?",
-          hint:"",
-          body:[
-            opt("photo","Fotos","Imágenes del lugar / situación"),
-            opt("video","Vídeo","Grabaciones relevantes"),
-            opt("docs","Documentos","Correos, informes, actas…"),
-            opt("witnesses","Testigos","Personas que pueden confirmar"),
-            opt("none","No tengo pruebas directas","Solo observación/experiencia"),
+        return tarjeta({
+          encabezado:"Fuentes y evidencias",
+          pregunta:"¿Qué apoyos o fuentes existen?",
+          pista:"",
+          cuerpo:[
+            opcion("fotos","Fotos","Imágenes del lugar / situación"),
+            opcion("video","Vídeo","Grabaciones relevantes"),
+            opcion("documentos","Documentos","Correos, informes, actas…"),
+            opcion("testigos","Testigos","Personas que pueden confirmar"),
+            opcion("ninguna","No tengo pruebas directas","Solo observación/experiencia"),
             el("label",{class:"h"},["Describe las fuentes (opcional)"]),
-            el("textarea",{ value:state.sourcesText, placeholder:"Enlaces, tipo de documento, testigos (rol)…",
-              oninput:(e)=>{ state.sourcesText = e.target.value; }
+            el("textarea",{ value:estado.textoFuentes, placeholder:"Enlaces, tipo de documento, testigos (rol)…",
+              oninput:(e)=>{ estado.textoFuentes = e.target.value; }
             }),
-            uploadSection,
+            seccionSubida,
           ],
-          nav: navButtons({ canNext:true })
+          nav: botonesNav({ puedeAvanzar:true })
         });
       }
 
-      if (key === "consent") {
-        const canNext = state.consent1 && state.consent2 && state.consent3;
-        const chk = (field, text)=> el("label",{class:"opt"},[
-          el("input",{type:"checkbox", ...(state[field]?{checked:""}:{}),
-            onchange:(e)=>{ state[field] = e.target.checked; render(); }
+      if (clave === "consentimiento") {
+        const puedeAvanzar = estado.consentimiento1 && estado.consentimiento2 && estado.consentimiento3;
+        const verificar = (campo, texto)=> el("label",{class:"opt"},[
+          el("input",{type:"checkbox", ...(estado[campo]?{checked:""}:{}),
+            onchange:(e)=>{ estado[campo] = e.target.checked; renderizar(); }
           }),
-          el("span",{class:"t"},[text])
+          el("span",{class:"t"},[texto])
         ]);
-        return card({
-          kicker:"Último paso",
-          q:"Consentimiento mínimo",
-          hint:"Necesario para el uso responsable del canal.",
-          body:[
-            chk("consent1","Declaro que la información es veraz según mi conocimiento."),
-            chk("consent2","Entiendo que este formulario no sustituye un proceso judicial o administrativo."),
-            chk("consent3","Acepto el tratamiento conforme al RGPD y a la política de privacidad de la Asociación.")
+        return tarjeta({
+          encabezado:"Último paso",
+          pregunta:"Consentimiento mínimo",
+          pista:"Necesario para el uso responsable del canal.",
+          cuerpo:[
+            verificar("consentimiento1","Declaro que la información es veraz según mi conocimiento."),
+            verificar("consentimiento2","Entiendo que este formulario no sustituye un proceso judicial o administrativo."),
+            verificar("consentimiento3","Acepto el tratamiento conforme al RGPD y a la política de privacidad de la Asociación.")
           ],
-          nav: navButtons({ canNext, nextLabel:"Finalizar" })
+          nav: botonesNav({ puedeAvanzar, etiquetaSiguiente:"Finalizar" })
         });
       }
 
-      if (key === "done") {
-        const selected = [...state.categories].join(", ") || "—";
-        return card({
-          kicker:"Listo",
-          q:"Formulario completado",
-          hint:"Revisa el resumen y envía cuando estés listo.",
-          body:[
+      if (clave === "finalizado") {
+        const seleccionadas = [...estado.categorias].join(", ") || "—";
+        return tarjeta({
+          encabezado:"Listo",
+          pregunta:"Formulario completado",
+          pista:"Revisa el resumen y envía cuando estés listo.",
+          cuerpo:[
             el("div",{class:"fake"},[
-              el("b",{},["Resumen interno (visual): "]),
+              el("b",["Resumen interno (visual): "]),
               el("div",{class:"small", html:
                 `<ul style="margin:8px 0 0;padding-left:18px;">
-                  <li><b>Anónimo:</b> ${state.anon==="yes"?"sí":"no"}</li>
-                  <li><b>Seguimiento:</b> ${state.followup==="yes"?"sí":"no"}</li>
-                  <li><b>Relación:</b> ${state.role||"—"}</li>
-                  <li><b>Categorías:</b> ${selected}</li>
+                  <li><b>Anónimo:</b> ${estado.anonimo==="si"?"sí":"no"}</li>
+                  <li><b>Seguimiento:</b> ${estado.seguimiento==="si"?"sí":"no"}</li>
+                  <li><b>Relación:</b> ${estado.relacion||"—"}</li>
+                  <li><b>Categorías:</b> ${seleccionadas}</li>
                 </ul>`
               })
             ]),
-            state.submitStatus
-              ? el("div",{class:"fake"},[state.submitStatus])
+            estado.estadoEnvio
+              ? el("div",{class:"fake"},[estado.estadoEnvio])
               : el("span"),
-            el("button",{type:"button",class:"btn primary",onclick:submitReport, id:"submitBtn"},["Enviar"])
+            el("button",{type:"button",class:"btn primary",onclick:enviarInforme, id:"btnEnviar"},["Enviar"])
           ],
           nav: el("div",{class:"nav"},[
             el("div",{class:"mini"},["Puedes volver y ajustar respuestas."]),
             el("div",{class:"right"},[
-              el("button",{type:"button",class:"btn",onclick: back},["Atrás"])
+              el("button",{type:"button",class:"btn",onclick: atras},["Atrás"])
             ])
           ])
         });
       }
 
-      return card({ kicker:"Error", q:"Pantalla no definida", hint:key, body:[], nav: navButtons() });
+      return tarjeta({ encabezado:"Error", pregunta:"Pantalla no definida", pista:clave, cuerpo:[], nav: botonesNav() });
     }
 
-    render();
+    renderizar();
   </script>
 </body>
 </html>
