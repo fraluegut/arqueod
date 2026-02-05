@@ -440,7 +440,7 @@
 
       <div class="shell">
         <div class="shellhead">
-          <div style="font-weight:950;">Asistente por pasos (prototipo)</div>
+          <div style="font-weight:950;">Asistente por pasos</div>
           <div class="progress">
             <span id="pText">Paso 1</span>
             <div class="bar"><div id="pBar"></div></div>
@@ -449,7 +449,7 @@
 
         <div class="stage" id="stage"></div>
 
-        <div class="footer">ArqueoTimes · ArqueoDenuncia (modo prueba, sin envío real)</div>
+        <div class="footer">ArqueoTimes · ArqueoDenuncia</div>
       </div>
     </div>
   </div>
@@ -510,7 +510,8 @@
       heritageType: "",
       heritageRisk: new Set(),
       heritageNarrative: "",
-      consent1:false, consent2:false, consent3:false
+      consent1:false, consent2:false, consent3:false,
+      submitStatus: ""
     };
 
     // ========== Helpers ==========
@@ -612,6 +613,82 @@
       stage.appendChild(screen);
     }
 
+    // ========== Envío ==========
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbw4STBlEFkN7_N0GyWI1yqnnjq_oKCUEcERTjmTy4spHBxO_ouzI0BSfvnw54D352Ec/exec"; // URL Google Apps Script
+
+    const buildPayload = () => ({
+      anon: state.anon,
+      followup: state.followup,
+      contact: state.contact,
+      role: state.role,
+      categories: [...state.categories],
+      whereType: state.whereType,
+      whereRef: state.whereRef,
+      whenType: state.whenType,
+      whenRef: state.whenRef,
+      summary: state.summary,
+      sourcesText: state.sourcesText,
+      hasEvidence: [...state.hasEvidence],
+      harassmentKinds: [...state.harassmentKinds],
+      harassmentNarrative: state.harassmentNarrative,
+      heritageType: state.heritageType,
+      heritageRisk: [...state.heritageRisk],
+      heritageNarrative: state.heritageNarrative,
+      consent: {
+        consent1: state.consent1,
+        consent2: state.consent2,
+        consent3: state.consent3
+      },
+      sendUserEmail: !!state.contact.trim(),
+      sendAdminEmail: true,
+      submittedAt: new Date().toISOString()
+    });
+
+    function getCaptchaToken() {
+      // Devuelve aquí el token real de reCAPTCHA/Turnstile cuando lo integres.
+      return "";
+    }
+
+    async function submitReport() {
+      if (!SUBMIT_ENDPOINT) {
+        state.submitStatus = "Falta configurar la URL de envío.";
+        render();
+        return;
+      }
+
+      const submitBtn = document.getElementById("submitBtn");
+      if (submitBtn) submitBtn.disabled = true;
+      state.submitStatus = "Enviando…";
+      render();
+
+      try {
+        const payload = buildPayload();
+        const formData = new FormData();
+        formData.append("payload", JSON.stringify(payload));
+        formData.append("captchaToken", getCaptchaToken());
+
+        state.uploadedFiles.forEach((f, i) => {
+          if (f.file) formData.append(`file_${i}`, f.file, f.name);
+        });
+
+        const resp = await fetch(SUBMIT_ENDPOINT, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!resp.ok) {
+          throw new Error("No se pudo enviar el formulario.");
+        }
+
+        state.submitStatus = "Enviado correctamente. Gracias por comunicarlo.";
+      } catch (err) {
+        state.submitStatus = "Hubo un problema al enviar. Inténtalo más tarde.";
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        render();
+      }
+    }
+
     // ========== Screens ==========
     function screenFor(key) {
       if (key === "intro") {
@@ -619,12 +696,7 @@
           kicker:"Inicio",
           q:"Antes de empezar",
           hint:"Puedes mantener el anonimato. Este canal no sustituye una denuncia judicial o administrativa.",
-          body:[
-            el("div",{class:"fake"},[
-              el("b",{},["Modo prueba: "]),
-              "no se enviará ni almacenará nada en esta versión."
-            ])
-          ],
+          body:[],
           nav: navButtons({ showBack:false })
         });
       }
@@ -1032,10 +1104,6 @@
               oninput:(e)=>{ state.sourcesText = e.target.value; }
             }),
             uploadSection,
-            el("div",{class:"fake"},[
-              el("b",{},["Pendiente: "]),
-              "captcha real + guardado en Google Sheets + email resumen."
-            ])
           ],
           nav: navButtons({ canNext:true })
         });
@@ -1066,8 +1134,8 @@
         const selected = [...state.categories].join(", ") || "—";
         return card({
           kicker:"Listo",
-          q:"Formulario completado (modo prueba)",
-          hint:"En la versión final se enviará con captcha + adjuntos + registro.",
+          q:"Formulario completado",
+          hint:"Revisa el resumen y envía cuando estés listo.",
           body:[
             el("div",{class:"fake"},[
               el("b",{},["Resumen interno (visual): "]),
@@ -1080,7 +1148,10 @@
                 </ul>`
               })
             ]),
-            el("button",{type:"button",class:"btn primary",onclick:()=>alert("PRUEBA: aquí se enviaría el formulario.")},["Enviar (prueba)"])
+            state.submitStatus
+              ? el("div",{class:"fake"},[state.submitStatus])
+              : el("span"),
+            el("button",{type:"button",class:"btn primary",onclick:submitReport, id:"submitBtn"},["Enviar"])
           ],
           nav: el("div",{class:"nav"},[
             el("div",{class:"mini"},["Puedes volver y ajustar respuestas."]),
