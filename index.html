@@ -321,86 +321,6 @@
       gap:4px;
     }
 
-    /* Protección por contraseña */
-    #passwordOverlay{
-      position:fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background:linear-gradient(135deg, var(--bg) 0%, var(--soft) 100%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-    }
-    #passwordOverlay.hidden{
-      display:none;
-    }
-    .passwordBox{
-      background:var(--paper);
-      border:1px solid var(--line);
-      border-radius:22px;
-      padding:32px;
-      box-shadow:var(--shadow);
-      max-width:420px;
-      width:90%;
-    }
-    .passwordBox h2{
-      margin:0 0 8px;
-      font-size:1.5rem;
-      color:var(--accent2);
-      font-weight:950;
-    }
-    .passwordBox p{
-      margin:0 0 20px;
-      color:var(--muted);
-      line-height:1.5;
-    }
-    .passwordBox input[type="password"]{
-      width:100%;
-      padding:14px;
-      border:2px solid var(--line);
-      border-radius:16px;
-      font-size:1rem;
-      margin-bottom:12px;
-      outline:none;
-    }
-    .passwordBox input[type="password"]:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 4px var(--focus);
-    }
-    .passwordBox button{
-      width:100%;
-      padding:14px;
-      border:none;
-      border-radius:16px;
-      background:var(--accent2);
-      color:#fff;
-      font-weight:900;
-      font-size:1rem;
-      cursor:pointer;
-      transition:all .2s;
-    }
-    .passwordBox button:hover{
-      background:var(--accent);
-    }
-    .passwordError{
-      color:#c44;
-      font-size:.88rem;
-      font-weight:600;
-      margin-top:8px;
-      display:none;
-    }
-    .passwordError.show{
-      display:block;
-    }
-    #mainContent{
-      display:none;
-    }
-    #mainContent.unlocked{
-      display:block;
-    }
 
     @keyframes slideFadeIn {
       from { opacity:0; transform: translateX(14px); }
@@ -412,17 +332,7 @@
 </head>
 
 <body>
-  <div id="passwordOverlay">
-    <div class="passwordBox">
-      <h2>🔒 Acceso restringido</h2>
-      <p>Introduce la contraseña para acceder al formulario ArqueoDenuncia.</p>
-      <input type="password" id="passwordInput" placeholder="Contraseña" />
-      <button onclick="checkPassword()">Acceder</button>
-      <div class="passwordError" id="passwordError">❌ Contraseña incorrecta</div>
-    </div>
-  </div>
 
-  <div id="mainContent">
   <div class="wrap">
     <div class="app">
       <div class="top">
@@ -453,41 +363,8 @@
       </div>
     </div>
   </div>
-  </div>
 
   <script>
-    // Protección por contraseña
-    const PASSWORD = "arqueotimes2026"; // Cambia esta contraseña
-
-    function checkPassword() {
-      const input = document.getElementById('passwordInput');
-      const error = document.getElementById('passwordError');
-      const overlay = document.getElementById('passwordOverlay');
-      const mainContent = document.getElementById('mainContent');
-      
-      if (input.value === PASSWORD) {
-        overlay.classList.add('hidden');
-        mainContent.classList.add('unlocked');
-        sessionStorage.setItem('authenticated', 'true');
-      } else {
-        error.classList.add('show');
-        input.value = '';
-        input.focus();
-        setTimeout(() => error.classList.remove('show'), 3000);
-      }
-    }
-
-    // Verificar si ya está autenticado en esta sesión
-    if (sessionStorage.getItem('authenticated') === 'true') {
-      document.getElementById('passwordOverlay').classList.add('hidden');
-      document.getElementById('mainContent').classList.add('unlocked');
-    }
-
-    // Permitir enter para enviar
-    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') checkPassword();
-    });
-
     // ========== Código del formulario ==========
     
     // ========== Estado ==========
@@ -940,7 +817,6 @@
         return tarjeta({
           encabezado:"Bloque específico",
           pregunta:"Acoso / discriminación",
-          pista:"Si es anónimo, evita nombres y datos identificables.",
           cuerpo:[
             el("label",{class:"h"},["¿Qué tipo(s)?"]),
             opcion("mobbing","Acoso laboral (mobbing)","Hostigamiento, presiones…"),
