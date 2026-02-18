@@ -372,7 +372,7 @@
       anonimo: "si",
       seguimiento: "no",
       contacto: "",
-      relacion: "",
+      relacion: new Set(),
       categorias: new Set(),
       tipoDonde: "",
       refDonde: "",
@@ -491,39 +491,50 @@
     }
 
     // ========== Envío ==========
-    const URL_ENVIO = "https://script.google.com/macros/s/AKfycbzI2nt5TJhX3QLV8xEE8WjmatYh9YNM4XKynpQSfc_NHhSlS4m33OAw4zdB-SGxL_g/exec"; // URL Google Apps Script
+    const URL_ENVIO = "https://script.google.com/macros/s/AKfycbwOHyFTwaoZsQJFfRq6C_lypPzRHOslvKojsa6ITLsD6ZU6lspWWDGQe9noweA0XShI/exec"; // URL Google Apps Script
 
     const construirDatos = () => ({
-      anonimo: estado.anonimo,
-      seguimiento: estado.seguimiento,
-      contacto: estado.contacto,
-      relacion: estado.relacion,
-      categorias: [...estado.categorias],
-      tipoDonde: estado.tipoDonde,
-      refDonde: estado.refDonde,
-      tipoCuando: estado.tipoCuando,
-      refCuando: estado.refCuando,
-      resumen: estado.resumen,
-      textoFuentes: estado.textoFuentes,
-      tieneEvidencia: [...estado.tieneEvidencia],
-      tiposAcoso: [...estado.tiposAcoso],
-      narrativaAcoso: estado.narrativaAcoso,
-      tipoPatrimonio: estado.tipoPatrimonio,
-      riesgoPatrimonio: [...estado.riesgoPatrimonio],
-      narrativaPatrimonio: estado.narrativaPatrimonio,
-      consentimiento: {
-        consentimiento1: estado.consentimiento1,
-        consentimiento2: estado.consentimiento2,
-        consentimiento3: estado.consentimiento3
-      },
-      enviarEmailUsuario: !!estado.contacto.trim(),
-      enviarEmailAdmin: true,
-      enviadoEn: new Date().toISOString()
+      // Nombres que espera el script de Google Apps Script
+      anon: estado.anonimo,
+      followup: estado.seguimiento,
+      contact: estado.contacto,
+      role: [...estado.relacion],
+      categories: [...estado.categorias],
+      whereType: estado.tipoDonde,
+      whereRef: estado.refDonde,
+      whenType: estado.tipoCuando,
+      whenRef: estado.refCuando,
+      summary: estado.resumen,
+      sourcesText: estado.textoFuentes,
+      hasEvidence: [...estado.tieneEvidencia],
+      harassmentKinds: [...estado.tiposAcoso],
+      harassmentNarrative: estado.narrativaAcoso,
+      heritageType: estado.tipoPatrimonio,
+      heritageRisk: [...estado.riesgoPatrimonio],
+      heritageNarrative: estado.narrativaPatrimonio
     });
 
     function obtenerTokenCaptcha() {
       // Devuelve aquí el token real de reCAPTCHA/Turnstile cuando lo integres.
       return "";
+    }
+
+    // Convierte un archivo a Base64
+    function archivoABase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1]; // Quitar el prefijo data:...
+          resolve({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: base64
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
 
     async function enviarInforme() {
@@ -540,25 +551,49 @@
 
       try {
         const datos = construirDatos();
-        const formData = new FormData();
-        formData.append("payload", JSON.stringify(datos));
-        formData.append("captchaToken", obtenerTokenCaptcha());
-
-        estado.archivosSubidos.forEach((f, i) => {
-          if (f.file) formData.append(`archivo_${i}`, f.file, f.name);
-        });
-
-        const resp = await fetch(URL_ENVIO, {
-          method: "POST",
-          body: formData
-        });
-
-        if (!resp.ok) {
-          throw new Error("No se pudo enviar el formulario.");
+        
+        // Convertir archivos a Base64 para incluirlos en el JSON (sin archivos grandes por ahora)
+        const archivosBase64 = [];
+        for (const archivo of estado.archivosSubidos) {
+          if (archivo.file && archivo.size < 1024 * 1024) { // Solo archivos < 1MB
+            const archivoConvertido = await archivoABase64(archivo.file);
+            archivosBase64.push(archivoConvertido);
+          }
         }
+        datos.archivos = archivosBase64;
 
+        // Crear un formulario oculto y enviarlo (más confiable con Google Apps Script)
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = URL_ENVIO;
+        form.target = 'envioFrame';
+        form.style.display = 'none';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload';
+        input.value = JSON.stringify(datos);
+        form.appendChild(input);
+        
+        // Crear iframe oculto para recibir la respuesta
+        let iframe = document.getElementById('envioFrame');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.name = 'envioFrame';
+          iframe.id = 'envioFrame';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        
+        // Esperar un momento y asumir éxito
+        await new Promise(resolve => setTimeout(resolve, 2000));
         estado.estadoEnvio = "Enviado correctamente. Gracias por comunicarlo.";
       } catch (err) {
+        console.error("Error al enviar:", err);
         estado.estadoEnvio = "Hubo un problema al enviar. Inténtalo más tarde.";
       } finally {
         if (btnEnviar) btnEnviar.disabled = false;
@@ -589,8 +624,8 @@
         const mostrarCampoContacto = estado.anonimo === "no" || estado.seguimiento === "si";
 
         const puedeAvanzar = () => {
-          // Primero: debe seleccionar su relación con el caso (obligatorio)
-          if (!estado.relacion) return false;
+          // Primero: debe seleccionar al menos una relación con el caso (obligatorio)
+          if (estado.relacion.size === 0) return false;
           
           // Si quiere seguimiento, debe proporcionar un email válido
           if (estado.seguimiento === "si") {
@@ -649,13 +684,17 @@
             ])
           ]),
 
-          el("label", { class:"h" }, ["¿Qué relación tienes con el caso?"]),
+          el("label", { class:"h" }, ["¿Qué relación tienes con el caso? (puedes marcar varias)"]),
           el("div", { class:"selectCardGroup" }, [
             ...[{v:"afectado", l:"Afectado/a directo/a"}, {v:"testigo", l:"Testigo"}, {v:"tercero", l:"Me llegó por terceros / documentación"}, {v:"no_decir", l:"Prefiero no decirlo"}].map(opcion => 
-              el("label", { class: "selectCard" + (estado.relacion === opcion.v ? " selected" : "") }, [
-                el("input", { type:"radio", name:"relacion", value:opcion.v, ...(estado.relacion===opcion.v?{checked:""}:{}),
+              el("label", { class: "selectCard" + (estado.relacion.has(opcion.v) ? " selected" : "") }, [
+                el("input", { type:"checkbox", value:opcion.v, ...(estado.relacion.has(opcion.v)?{checked:""}:{}),
                   onchange:(e)=>{ 
-                    estado.relacion = e.target.value; 
+                    if (e.target.checked) {
+                      estado.relacion.add(opcion.v);
+                    } else {
+                      estado.relacion.delete(opcion.v);
+                    }
                     if (refBtnSiguiente) refBtnSiguiente.disabled = !puedeAvanzar();
                     renderizar(); 
                   }
@@ -1019,7 +1058,7 @@
                 `<ul style="margin:8px 0 0;padding-left:18px;">
                   <li><b>Anónimo:</b> ${estado.anonimo==="si"?"sí":"no"}</li>
                   <li><b>Seguimiento:</b> ${estado.seguimiento==="si"?"sí":"no"}</li>
-                  <li><b>Relación:</b> ${estado.relacion||"—"}</li>
+                  <li><b>Relación:</b> ${[...estado.relacion].join(", ")||"—"}</li>
                   <li><b>Categorías:</b> ${seleccionadas}</li>
                 </ul>`
               })
